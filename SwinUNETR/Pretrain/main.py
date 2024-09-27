@@ -45,7 +45,7 @@ def main():
             x2_augment = aug_rand(args, x2)
             x1_augment = x1_augment
             x2_augment = x2_augment
-            with autocast(enabled=args.amp):
+            with autocast('cuda',enabled=args.amp):
                 rot1_p, contrastive1_p, rec_x1 = model(x1_augment)
                 rot2_p, contrastive2_p, rec_x2 = model(x2_augment)
                 rot_p = torch.cat([rot1_p, rot2_p], dim=0)
