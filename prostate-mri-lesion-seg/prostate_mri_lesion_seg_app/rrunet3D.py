@@ -1,5 +1,5 @@
 """
-Prostate-MRI_Lesion_Detection, v2.0 (Release date: August 2, 2023)
+Prostate-MRI_Lesion_Detection, v3.0 (Release date: September 17, 2024)
 DEFINITIONS: AUTHOR(S) NVIDIA Corp. and National Cancer Institute, NIH
 
 PROVIDER: the National Cancer Institute (NCI), a participating institute of the
@@ -240,6 +240,7 @@ class RRUNet3D(nn.Module):
         self.levels_down = len(self.blocks_down)
         self.encoders = []
         for _i in range(self.levels_down):
+
             in_c = num_init_kernels * 2**_i if _i == 0 else num_init_kernels * 2 ** (_i - 1)
             out_c = num_init_kernels * 2**_i
             # if self.debug:
