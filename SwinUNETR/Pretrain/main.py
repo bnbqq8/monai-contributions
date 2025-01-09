@@ -8,7 +8,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""
+CUDA_VISIBLE_DEVICES=0 ~/python main.py --use_checkpoint --num_steps=100000 --lrdecay --eval_num=500 \
+--lr=6e-6 --decay=0.1 --seq=T1 --persistent_dataset \
+--load_from=/home/czfy/AS_MAE/log/model_swinvit.pt --logdir=pretrain
+"""
 import argparse
 import os
 from time import time
@@ -45,7 +49,7 @@ def main():
             x2_augment = aug_rand(args, x2)
             x1_augment = x1_augment
             x2_augment = x2_augment
-            with autocast('cuda',enabled=args.amp):
+            with autocast("cuda", enabled=args.amp):
                 rot1_p, contrastive1_p, rec_x1 = model(x1_augment)
                 rot2_p, contrastive2_p, rec_x2 = model(x2_augment)
                 rot_p = torch.cat([rot1_p, rot2_p], dim=0)
@@ -168,10 +172,10 @@ def main():
     parser.add_argument("--space_x", default=1.5, type=float, help="spacing in x direction")
     parser.add_argument("--space_y", default=1.5, type=float, help="spacing in y direction")
     parser.add_argument("--space_z", default=2.0, type=float, help="spacing in z direction")
-    parser.add_argument("--roi_x", default=96, type=int, help="roi size in x direction")
-    parser.add_argument("--roi_y", default=96, type=int, help="roi size in y direction")
-    parser.add_argument("--roi_z", default=96, type=int, help="roi size in z direction")
-    parser.add_argument("--batch_size", default=2, type=int, help="number of batch size")
+    parser.add_argument("--roi_x", default=256, type=int, help="roi size in x direction")
+    parser.add_argument("--roi_y", default=256, type=int, help="roi size in y direction")
+    parser.add_argument("--roi_z", default=12, type=int, help="roi size in z direction")
+    parser.add_argument("--batch_size", default=1, type=int, help="number of batch size")
     parser.add_argument("--sw_batch_size", default=2, type=int, help="number of sliding window batch size")
     parser.add_argument("--lr", default=4e-4, type=float, help="learning rate")
     parser.add_argument("--decay", default=0.1, type=float, help="decay rate")
@@ -182,15 +186,18 @@ def main():
     parser.add_argument("--opt", default="adamw", type=str, help="optimization algorithm")
     parser.add_argument("--lr_schedule", default="warmup_cosine", type=str)
     parser.add_argument("--resume", default=None, type=str, help="resume training")
+    parser.add_argument("--load_from", default=None, type=str, help="load model from a checkpoint")
     parser.add_argument("--local_rank", type=int, default=0, help="local rank")
     parser.add_argument("--grad_clip", action="store_true", help="gradient clip")
     parser.add_argument("--noamp", action="store_true", help="do NOT use amp for training")
     parser.add_argument("--dist-url", default="env://", help="url used to set up distributed training")
     parser.add_argument("--smartcache_dataset", action="store_true", help="use monai smartcache Dataset")
     parser.add_argument("--cache_dataset", action="store_true", help="use monai cache Dataset")
+    parser.add_argument("--persistent_dataset", action="store_true", help="use monai persistent Dataset")
+    parser.add_argument("--seq", required=True, type=str, help="choose between T1, T2 and FS")
 
     args = parser.parse_args()
-    logdir = "./runs/" + args.logdir
+    logdir = "./runs/" + f"{args.logdir}_{args.seq}/"
     args.amp = not args.noamp
     torch.backends.cudnn.benchmark = True
     torch.autograd.set_detect_anomaly(True)
@@ -233,12 +240,19 @@ def main():
     elif args.opt == "sgd":
         optimizer = optim.SGD(params=model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.decay)
 
+    assert not (
+        args.resume is not None and args.load_from is not None
+    ), "Cannot resume and load from a model at the same time"
     if args.resume:
         model_pth = args.resume
         model_dict = torch.load(model_pth)
         model.load_state_dict(model_dict["state_dict"])
         model.epoch = model_dict["epoch"]
         model.optimizer = model_dict["optimizer"]
+    elif args.load_from:
+        model_pth = args.load_from
+        model_dict = torch.load(model_pth, map_location="cuda")
+        model.load_state_dict(model_dict["state_dict"])
 
     if args.lrdecay:
         if args.lr_schedule == "warmup_cosine":
@@ -277,4 +291,7 @@ def main():
 
 
 if __name__ == "__main__":
+    import debugpy
+
+    debugpy.connect(("localhost", 5678))
     main()
