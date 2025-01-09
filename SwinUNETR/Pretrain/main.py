@@ -24,7 +24,7 @@ import torch.optim as optim
 from losses.loss import Loss
 from models.ssl_head import SSLHead
 from optimizers.lr_scheduler import WarmupCosineSchedule
-from torch.cuda.amp import GradScaler, autocast
+from torch import GradScaler, autocast
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.tensorboard import SummaryWriter
 from utils.data_utils import get_loader
@@ -228,7 +228,7 @@ def main():
     else:
         writer = None
 
-    model = SSLHead(args)
+    model = SSLHead(args, upsample="large_kernel_deconv")
     model.cuda()
 
     if args.opt == "adam":
@@ -252,6 +252,14 @@ def main():
     elif args.load_from:
         model_pth = args.load_from
         model_dict = torch.load(model_pth, map_location="cuda")
+
+        map_keys = {
+            ("module." + k.replace("swinViT.", "").replace("linear", "fc")): k for k in model.state_dict().keys()
+        }
+        map_keys.update({"module.convTrans3d.weight": "conv.weight"})
+        map_keys.update({"module.convTrans3d.bias": "conv.bias"})
+
+        model_dict["state_dict"] = {map_keys[k]: v for k, v in model_dict["state_dict"].items() if k in map_keys}
         model.load_state_dict(model_dict["state_dict"])
 
     if args.lrdecay:
