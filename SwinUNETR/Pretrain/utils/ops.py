@@ -54,11 +54,11 @@ def rot_rand(args, x_s):
         if orientation == 0:
             pass
         elif orientation == 1:
-            x = x.rot90(1, (2, 3))
+            x = x.rot90(1, (1, 2))
         elif orientation == 2:
-            x = x.rot90(2, (2, 3))
+            x = x.rot90(2, (1, 2))
         elif orientation == 3:
-            x = x.rot90(3, (2, 3))
+            x = x.rot90(3, (1, 2))
         x_aug[i] = x
         x_rot[i] = orientation
     return x_aug, x_rot

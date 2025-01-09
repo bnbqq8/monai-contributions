@@ -8,75 +8,90 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from pathlib import Path
 
-from monai.data import CacheDataset, DataLoader, Dataset, DistributedSampler, SmartCacheDataset, load_decathlon_datalist
+from platformdirs import user_log_dir
+
+from monai.config import PathLike
+from monai.data import (
+    CacheDataset,
+    DataLoader,
+    Dataset,
+    DistributedSampler,
+    PersistentDataset,
+    SmartCacheDataset,
+    load_decathlon_datalist,
+)
+from monai.data.utils import pickle_hashing
 from monai.transforms import (
-    AddChanneld,
-    AsChannelFirstd,
     Compose,
     CropForegroundd,
+    EnsureChannelFirstd,
     LoadImaged,
-    NormalizeIntensityd,
     Orientationd,
-    RandCropByPosNegLabeld,
     RandSpatialCropSamplesd,
-    ScaleIntensityRanged,
-    Spacingd,
+    ScaleIntensityRangePercentilesd,
     SpatialPadd,
     ToTensord,
 )
 
 
 def get_loader(args):
-    splits1 = "/dataset_LUNA16_0.json"
-    splits2 = "/dataset_TCIAcovid19_0.json"
-    splits3 = "/dataset_HNSCC_0.json"
-    splits4 = "/dataset_TCIAcolon_v2_0.json"
-    splits5 = "/dataset_LIDC_0.json"
-    list_dir = "./jsons"
-    jsonlist1 = list_dir + splits1
-    jsonlist2 = list_dir + splits2
-    jsonlist3 = list_dir + splits3
-    jsonlist4 = list_dir + splits4
-    jsonlist5 = list_dir + splits5
-    datadir1 = "/dataset/dataset1"
-    datadir2 = "/dataset/dataset2"
-    datadir3 = "/dataset/dataset3"
-    datadir4 = "/dataset/dataset4"
-    datadir5 = "/dataset/dataset8"
+    # splits1 = "/dataset_LUNA16_0.json"
+    # splits2 = "/dataset_TCIAcovid19_0.json"
+    # splits3 = "/dataset_HNSCC_0.json"
+    # splits4 = "/dataset_TCIAcolon_v2_0.json"
+    # splits5 = "/dataset_LIDC_0.json"
+    # list_dir = "./jsons"
+    # jsonlist1 = list_dir + splits1
+    # jsonlist2 = list_dir + splits2
+    # jsonlist3 = list_dir + splits3
+    # jsonlist4 = list_dir + splits4
+    # jsonlist5 = list_dir + splits5
+    # datadir1 = "/dataset/dataset1"
+    # datadir2 = "/dataset/dataset2"
+    # datadir3 = "/dataset/dataset3"
+    # datadir4 = "/dataset/dataset4"
+    # datadir5 = "/dataset/dataset8"
     num_workers = 4
-    datalist1 = load_decathlon_datalist(jsonlist1, False, "training", base_dir=datadir1)
-    print("Dataset 1 LUNA16: number of data: {}".format(len(datalist1)))
-    new_datalist1 = []
-    for item in datalist1:
-        item_dict = {"image": item["image"]}
-        new_datalist1.append(item_dict)
-    datalist2 = load_decathlon_datalist(jsonlist2, False, "training", base_dir=datadir2)
-    print("Dataset 2 Covid 19: number of data: {}".format(len(datalist2)))
-    datalist3 = load_decathlon_datalist(jsonlist3, False, "training", base_dir=datadir3)
-    print("Dataset 3 HNSCC: number of data: {}".format(len(datalist3)))
-    datalist4 = load_decathlon_datalist(jsonlist4, False, "training", base_dir=datadir4)
-    print("Dataset 4 TCIA Colon: number of data: {}".format(len(datalist4)))
-    datalist5 = load_decathlon_datalist(jsonlist5, False, "training", base_dir=datadir5)
-    print("Dataset 5: number of data: {}".format(len(datalist5)))
-    vallist1 = load_decathlon_datalist(jsonlist1, False, "validation", base_dir=datadir1)
-    vallist2 = load_decathlon_datalist(jsonlist2, False, "validation", base_dir=datadir2)
-    vallist3 = load_decathlon_datalist(jsonlist3, False, "validation", base_dir=datadir3)
-    vallist4 = load_decathlon_datalist(jsonlist4, False, "validation", base_dir=datadir4)
-    vallist5 = load_decathlon_datalist(jsonlist5, False, "validation", base_dir=datadir5)
-    datalist = new_datalist1 + datalist2 + datalist3 + datalist4 + datalist5
-    val_files = vallist1 + vallist2 + vallist3 + vallist4 + vallist5
-    print("Dataset all training: number of data: {}".format(len(datalist)))
-    print("Dataset all validation: number of data: {}".format(len(val_files)))
+    # datalist1 = load_decathlon_datalist(jsonlist1, False, "training", base_dir=datadir1)
+    # print("Dataset 1 LUNA16: number of data: {}".format(len(datalist1)))
+    # new_datalist1 = []
+    # for item in datalist1:
+    #     item_dict = {"image": item["image"]}
+    #     new_datalist1.append(item_dict)
+    # datalist2 = load_decathlon_datalist(jsonlist2, False, "training", base_dir=datadir2)
+    # print("Dataset 2 Covid 19: number of data: {}".format(len(datalist2)))
+    # datalist3 = load_decathlon_datalist(jsonlist3, False, "training", base_dir=datadir3)
+    # print("Dataset 3 HNSCC: number of data: {}".format(len(datalist3)))
+    # datalist4 = load_decathlon_datalist(jsonlist4, False, "training", base_dir=datadir4)
+    # print("Dataset 4 TCIA Colon: number of data: {}".format(len(datalist4)))
+    # datalist5 = load_decathlon_datalist(jsonlist5, False, "training", base_dir=datadir5)
+    # print("Dataset 5: number of data: {}".format(len(datalist5)))
+    # vallist1 = load_decathlon_datalist(jsonlist1, False, "validation", base_dir=datadir1)
+    # vallist2 = load_decathlon_datalist(jsonlist2, False, "validation", base_dir=datadir2)
+    # vallist3 = load_decathlon_datalist(jsonlist3, False, "validation", base_dir=datadir3)
+    # vallist4 = load_decathlon_datalist(jsonlist4, False, "validation", base_dir=datadir4)
+    # vallist5 = load_decathlon_datalist(jsonlist5, False, "validation", base_dir=datadir5)
+    # datalist = new_datalist1 + datalist2 + datalist3 + datalist4 + datalist5
+    # val_files = vallist1 + vallist2 + vallist3 + vallist4 + vallist5
+    # print("Dataset all training: number of data: {}".format(len(datalist)))
+    # print("Dataset all validation: number of data: {}".format(len(val_files)))
+
+    # overwrite datalist and val_files
+    datalist, val_files = get_custom_datalist(
+        Path("/home/czfy/AS_MAE_Data/nii_origin_instance_number_split_20241209/"), seq=args.seq
+    )
 
     train_transforms = Compose(
         [
             LoadImaged(keys=["image"]),
-            AddChanneld(keys=["image"]),
-            Orientationd(keys=["image"], axcodes="RAS"),
-            ScaleIntensityRanged(
-                keys=["image"], a_min=args.a_min, a_max=args.a_max, b_min=args.b_min, b_max=args.b_max, clip=True
-            ),
+            EnsureChannelFirstd(keys=["image"]),  # deprecated  AddChanneld(keys=["image"]),
+            # Orientationd(keys=["image"], axcodes="RAS"),
+            # ScaleIntensityRanged(
+            #     keys=["image"], a_min=args.a_min, a_max=args.a_max, b_min=args.b_min, b_max=args.b_max, clip=True
+            # ),
+            ScaleIntensityRangePercentilesd(keys=["image"], lower=0, upper=99, b_min=-1.0, b_max=1.0, clip=True),
             SpatialPadd(keys="image", spatial_size=[args.roi_x, args.roi_y, args.roi_z]),
             CropForegroundd(keys=["image"], source_key="image", k_divisible=[args.roi_x, args.roi_y, args.roi_z]),
             RandSpatialCropSamplesd(
@@ -92,11 +107,12 @@ def get_loader(args):
     val_transforms = Compose(
         [
             LoadImaged(keys=["image"]),
-            AddChanneld(keys=["image"]),
-            Orientationd(keys=["image"], axcodes="RAS"),
-            ScaleIntensityRanged(
-                keys=["image"], a_min=args.a_min, a_max=args.a_max, b_min=args.b_min, b_max=args.b_max, clip=True
-            ),
+            EnsureChannelFirstd(keys=["image"]),  # deprecated  AddChanneld(keys=["image"]),
+            # Orientationd(keys=["image"], axcodes="RAS"),
+            # ScaleIntensityRanged(
+            #     keys=["image"], a_min=args.a_min, a_max=args.a_max, b_min=args.b_min, b_max=args.b_max, clip=True
+            # ),
+            ScaleIntensityRangePercentilesd(keys=["image"], lower=0, upper=99, b_min=-1.0, b_max=1.0, clip=True),
             SpatialPadd(keys="image", spatial_size=[args.roi_x, args.roi_y, args.roi_z]),
             CropForegroundd(keys=["image"], source_key="image", k_divisible=[args.roi_x, args.roi_y, args.roi_z]),
             RandSpatialCropSamplesd(
@@ -121,6 +137,14 @@ def get_loader(args):
             replace_rate=1.0,
             cache_num=2 * args.batch_size * args.sw_batch_size,
         )
+    elif args.persistent_dataset:
+        print("Using MONAI Persistent Dataset")
+        train_ds = PersistentDataset(
+            data=datalist,
+            transform=train_transforms,
+            cache_dir="/home/czfy/AS_MAE_Data/cache_pretrain",
+            hash_transform=pickle_hashing,
+        )
     else:
         print("Using generic dataset")
         train_ds = Dataset(data=datalist, transform=train_transforms)
@@ -137,3 +161,14 @@ def get_loader(args):
     val_loader = DataLoader(val_ds, batch_size=args.batch_size, num_workers=num_workers, shuffle=False, drop_last=True)
 
     return train_loader, val_loader
+
+
+def get_custom_datalist(data_dir: Path, seq: str):
+    train_dir = data_dir / "train"
+    us_dir = data_dir / "unsupervised"
+    val_dir = data_dir / "test"
+    train_data_list = list(Path(train_dir).glob("*")) + list(Path(us_dir).glob("*"))
+    val_data_list = list(Path(val_dir).glob("*"))
+    train_data_list = [{"image": str(i / f"{seq}.nii.gz")} for i in train_data_list]
+    val_data_list = [{"image": str(i / f"{seq}.nii.gz")} for i in val_data_list]
+    return train_data_list, val_data_list
