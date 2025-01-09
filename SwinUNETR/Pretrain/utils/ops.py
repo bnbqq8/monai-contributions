@@ -20,7 +20,7 @@ def patch_rand_drop(args, x, x_rep=None, max_drop=0.3, max_block_sz=0.25, tolr=0
     mx_blk_height = int(h * max_block_sz)
     mx_blk_width = int(w * max_block_sz)
     mx_blk_slices = int(z * max_block_sz)
-    tolr = (int(tolr * h), int(tolr * w), int(tolr * z))
+    tolr = (max(1, int(tolr * h)), max(1, int(tolr * w)), max(1, int(tolr * z)))
     total_pix = 0
     while total_pix < n_drop_pix:
         rnd_r = randint(0, h - tolr[0])
