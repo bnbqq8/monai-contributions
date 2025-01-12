@@ -266,6 +266,9 @@ def main():
         map_keys.update({"module.convTrans3d.bias": "conv.bias"})
 
         model_dict["state_dict"] = {map_keys[k]: v for k, v in model_dict["state_dict"].items() if k in map_keys}
+        model_dict["state_dict"]["conv.weight"] = (
+            model_dict["state_dict"]["conv.weight"][..., 10:-10].contiguous().clone()
+        )
         model.load_state_dict(model_dict["state_dict"])
 
     if args.lrdecay:
