@@ -215,6 +215,8 @@ def main():
     args.rank = 0
 
     if args.distributed:
+        # to support torchrun
+        args.local_rank = int(os.environ["LOCAL_RANK"])
         args.device = "cuda:%d" % args.local_rank
         torch.cuda.set_device(args.local_rank)
         torch.distributed.init_process_group(backend="nccl", init_method=args.dist_url)
@@ -285,6 +287,7 @@ def main():
     loss_function = Loss(args.batch_size * args.sw_batch_size, args)
     if args.distributed:
         model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
+        print("args.local_rank", args.local_rank)
         model = DistributedDataParallel(model, device_ids=[args.local_rank])
     train_loader, test_loader = get_loader(args)
 
