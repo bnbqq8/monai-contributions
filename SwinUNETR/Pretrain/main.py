@@ -9,8 +9,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-CUDA_VISIBLE_DEVICES=0 ~/python main.py --use_checkpoint --num_steps=100000 --lrdecay --eval_num=500 \
---lr=6e-6 --decay=0.1 --seq=T1 --persistent_dataset \
+single GPU training script
+CUDA_VISIBLE_DEVICES=2 ~/python main.py 
+
+multi-GPU training script
+
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=11223 main.py \
+--use_checkpoint --num_steps=100000 --lrdecay --eval_num=500 \
+--batch_size 2 --lr=6e-6 --decay=0.1 --seq=FS --persistent_dataset \
 --load_from=/home/czfy/AS_MAE/log/model_swinvit.pt --logdir=pretrain
 """
 import argparse
