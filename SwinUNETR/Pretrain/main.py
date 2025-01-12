@@ -199,8 +199,8 @@ def main():
     args = parser.parse_args()
     logdir = "./runs/" + f"{args.logdir}_{args.seq}/"
     args.amp = not args.noamp
-    torch.backends.cudnn.benchmark = True
-    torch.autograd.set_detect_anomaly(True)
+    # torch.backends.cudnn.benchmark = True
+    # torch.autograd.set_detect_anomaly(True)
     args.distributed = False
     if "WORLD_SIZE" in os.environ:
         args.distributed = int(os.environ["WORLD_SIZE"]) > 1
