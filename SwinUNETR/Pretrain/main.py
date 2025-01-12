@@ -18,6 +18,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=11223 mai
 --use_checkpoint --num_steps=100000 --lrdecay --eval_num=500 \
 --batch_size 2 --lr=6e-6 --decay=0.1 --seq=FS --persistent_dataset \
 --load_from=/home/czfy/AS_MAE/log/model_swinvit.pt --logdir=pretrain
+
 """
 import argparse
 import os
@@ -75,9 +76,9 @@ def main():
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
                 optimizer.step()
 
+            optimizer.zero_grad()
             if args.lrdecay:
                 scheduler.step()
-            optimizer.zero_grad()
             if args.distributed:
                 if dist.get_rank() == 0:
                     print("Step:{}/{}, Loss:{:.4f}, Time:{:.4f}".format(global_step, args.num_steps, loss, time() - t1))
@@ -311,7 +312,7 @@ def main():
 
 
 if __name__ == "__main__":
-    import debugpy
+    # import debugpy
 
-    debugpy.connect(("localhost", 5678))
+    # debugpy.connect(("localhost", 5678))
     main()
