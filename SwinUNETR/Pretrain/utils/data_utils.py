@@ -53,7 +53,7 @@ def get_loader(args):
     # datadir3 = "/dataset/dataset3"
     # datadir4 = "/dataset/dataset4"
     # datadir5 = "/dataset/dataset8"
-    num_workers = 4
+    num_workers = 16
     # datalist1 = load_decathlon_datalist(jsonlist1, False, "training", base_dir=datadir1)
     # print("Dataset 1 LUNA16: number of data: {}".format(len(datalist1)))
     # new_datalist1 = []
@@ -91,7 +91,7 @@ def get_loader(args):
             # ScaleIntensityRanged(
             #     keys=["image"], a_min=args.a_min, a_max=args.a_max, b_min=args.b_min, b_max=args.b_max, clip=True
             # ),
-            ScaleIntensityRangePercentilesd(keys=["image"], lower=0, upper=99, b_min=-1.0, b_max=1.0, clip=True),
+            ScaleIntensityRangePercentilesd(keys=["image"], lower=0, upper=99, b_min=0.0, b_max=1.0, clip=True),
             SpatialPadd(keys="image", spatial_size=[args.roi_x, args.roi_y, args.roi_z]),
             CropForegroundd(keys=["image"], source_key="image", k_divisible=[args.roi_x, args.roi_y, args.roi_z]),
             RandSpatialCropSamplesd(
@@ -112,7 +112,7 @@ def get_loader(args):
             # ScaleIntensityRanged(
             #     keys=["image"], a_min=args.a_min, a_max=args.a_max, b_min=args.b_min, b_max=args.b_max, clip=True
             # ),
-            ScaleIntensityRangePercentilesd(keys=["image"], lower=0, upper=99, b_min=-1.0, b_max=1.0, clip=True),
+            ScaleIntensityRangePercentilesd(keys=["image"], lower=0, upper=99, b_min=0.0, b_max=1.0, clip=True),
             SpatialPadd(keys="image", spatial_size=[args.roi_x, args.roi_y, args.roi_z]),
             CropForegroundd(keys=["image"], source_key="image", k_divisible=[args.roi_x, args.roi_y, args.roi_z]),
             RandSpatialCropSamplesd(
