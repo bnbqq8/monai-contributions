@@ -10,13 +10,13 @@
 # limitations under the License.
 """
 single GPU training script
-CUDA_VISIBLE_DEVICES=2 ~/python main.py 
+CUDA_VISIBLE_DEVICES=0 ~/python main.py 
 
 multi-GPU training script
 
 CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=11223 main.py \
 --use_checkpoint --num_steps=100000 --lrdecay --eval_num=500 \
---batch_size 2 --lr=6e-6 --decay=0.1 --seq=FS --persistent_dataset \
+--batch_size 2 --lr=6e-6 --decay=0.1 --seq=T1 --persistent_dataset \
 --load_from=/home/czfy/AS_MAE/log/model_swinvit.pt --logdir=pretrain
 
 """
@@ -133,7 +133,7 @@ def main():
                 x2, rot2 = rot_rand(args, val_inputs)
                 x1_augment = aug_rand(args, x1)
                 x2_augment = aug_rand(args, x2)
-                with autocast(enabled=args.amp):
+                with autocast("cuda", enabled=args.amp):
                     rot1_p, contrastive1_p, rec_x1 = model(x1_augment)
                     rot2_p, contrastive2_p, rec_x2 = model(x2_augment)
                     rot_p = torch.cat([rot1_p, rot2_p], dim=0)
@@ -146,15 +146,15 @@ def main():
                 loss_val_recon.append(loss_recon.item())
                 x_gt = x1.detach().cpu().numpy()
                 x_gt = (x_gt - np.min(x_gt)) / (np.max(x_gt) - np.min(x_gt))
-                xgt = x_gt[0][0][:, :, 48] * 255.0
+                xgt = x_gt[0][0][:, :, 6] * 255.0
                 xgt = xgt.astype(np.uint8)
                 x1_augment = x1_augment.detach().cpu().numpy()
                 x1_augment = (x1_augment - np.min(x1_augment)) / (np.max(x1_augment) - np.min(x1_augment))
-                x_aug = x1_augment[0][0][:, :, 48] * 255.0
+                x_aug = x1_augment[0][0][:, :, 6] * 255.0
                 x_aug = x_aug.astype(np.uint8)
                 rec_x1 = rec_x1.detach().cpu().numpy()
                 rec_x1 = (rec_x1 - np.min(rec_x1)) / (np.max(rec_x1) - np.min(rec_x1))
-                recon = rec_x1[0][0][:, :, 48] * 255.0
+                recon = rec_x1[0][0][:, :, 6] * 255.0
                 recon = recon.astype(np.uint8)
                 img_list = [xgt, x_aug, recon]
                 print("Validation step:{}, Loss:{:.4f}, Loss Reconstruction:{:.4f}".format(step, loss, loss_recon))
